@@ -26,6 +26,7 @@ MemoryArena arena;
 
 struct Options
 {
+	u64 memory = MB( 64 );
 	const char *programName = "font_maker.exe";
 	const char *workingDirectory = nullptr;
 	bool verbose = false;
@@ -59,6 +60,7 @@ static int usage_message( RESULT_CODE code )
 	show_log_message( "[-sdf] <int>                 EG. -sdf 8                                 (pixels added for sdf room)" );
 	show_log_message( "[-base64]                    EG. -base64                                (enable base64 encoding)" );
 	show_log_message( "[-compress]                  EG. -compress                              (enable zlib compressing)" );
+	show_log_message( "[-memory] <bytes>            EG. -memory 1024                           (specify memory allocation)" );
 
 #ifdef DEBUG
 	system( "pause" );
@@ -82,12 +84,6 @@ int main( int argc, const char *argv[] )
 #endif
 
 	platform_initialise();
-
-	if ( !memory_arena_initialise( &arena, 0, MB( 64 ) ) )
-	{
-		show_log_error( "Failed to initialise memory arena" );
-		return usage_message( RESULT_CODE_FAILED_MEMORY_ARENA_INITIALISATION );
-	}
 
 	options.inputFile[ 0 ] = '\0';
 	options.outputFile[ 0 ] = '\0';
@@ -173,6 +169,13 @@ int main( int argc, const char *argv[] )
 			return RESULT_CODE_SUCCESS;
 		} );
 
+	commands.insert( "-memory", [] ( int &index, int argc, const char *argv[] )
+		{
+			options.memory = convert_to_int( argv[ ++index ] );
+
+			return RESULT_CODE_SUCCESS;
+		} );
+
 	// Process the option commands
 	for ( int i = 2; i < argc; ++i )
 	{
@@ -189,6 +192,12 @@ int main( int argc, const char *argv[] )
 			show_log_warning( "Unknown command: %s", argv[ i ] );
 			return usage_message( RESULT_CODE_UNKNOWN_OPTIONAL_COMMAND );
 		}
+	}
+
+	if ( !memory_arena_initialise( &arena, 0, options.memory ) )
+	{
+		show_log_error( "Failed to initialise memory arena" );
+		return usage_message( RESULT_CODE_FAILED_MEMORY_ARENA_INITIALISATION );
 	}
 
 	// Set working directory
