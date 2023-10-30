@@ -44,11 +44,7 @@ if %debugMode% == 1 (
 if not exist %buildDir% ( mkdir %buildDir% )
 if not exist %objectDir% ( mkdir %objectDir% )
 
-del %buildDir%*.pdb > NUL 2> NUL
-
-SET commands=-nologo %flags% %warnings% %defines% %math%
-
-cl %commands% -Fe%buildDir%%name%.exe -Fo%objectDir% src\main.cpp %includes% %links% -INCREMENTAL:NO
+cl -nologo %flags% %warnings% %defines% %math% -Fe%buildDir%%name%.exe -Fo%objectDir% src\main.cpp %includes% %links% -INCREMENTAL:NO
 if not %ERRORLEVEL% == 0 ( goto build_failed )
 
 :build_success

@@ -62,10 +62,6 @@ static int usage_message( RESULT_CODE code )
 	show_log_message( "[-compress]                  EG. -compress                              (enable zlib compressing)" );
 	show_log_message( "[-memory] <bytes>            EG. -memory 1024                           (specify memory allocation)" );
 
-#ifdef DEBUG
-	system( "pause" );
-#endif
-
 	return code;
 }
 
@@ -562,10 +558,6 @@ int main( int argc, const char *argv[] )
 	// -----------------------------------------------------------------------------
 
 	platform_close_file( inputDataFile );
-
-#ifdef DEBUG
-	system( "pause" );
-#endif
 
 	return 0;
 }
