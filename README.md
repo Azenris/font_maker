@@ -12,10 +12,14 @@ cmake --build build --config=Debug           for debug
 ```
 If zlib cannot be found, manually specify the locations.
 ```
-cmake -S . -B build -DZLIB_LIBRARY="C:/libs/zlib/debug/64/zlib.lib" -DZLIB_INCLUDE_DIR="C:/libs/zlib/include"
-ZLIB_LIBRARY      should point to your zlib library
-ZLIB_INCLUDE_DIR  should point to your zlib include directory
+cmake -S . -B build ^ -DZLIB_LIBRARY="C:/zlib/debug/64/zlib.lib" -DZLIB_INCLUDE_DIR="C:/zlib/include"
+ZLIB_LIBRARY              you can specify this or the release & debug separately
+ZLIB_LIBRARY_RELEASE      should point to your release zlib library
+ZLIB_LIBRARY_DEBUG        should point to your debug zlib library
+ZLIB_INCLUDE_DIR          should point to your zlib include directory
+```
 ```
 
 # build.bat
 You can check the build.bat as an example.
+It will also show how the zlib is compiled using vcpkg

@@ -91,22 +91,6 @@ void show_debug_error_function_ext( const char *message, va_list args )
 	show_debug_function( FOREGROUND_RED, "[ERROR]: ", buffer );
 }
 
-// Timing
-/// @desc Returns how many tick counts happen per second. Cannot change after system boot. Only need once and cache.
-[[nodiscard]] inline u64 platform_get_tick_frequency()
-{
-	LARGE_INTEGER freq;
-	QueryPerformanceFrequency( &freq );
-	return freq.QuadPart;
-}
-
-[[nodiscard]] inline u64 platform_get_tick_counter()
-{
-	LARGE_INTEGER counter;
-	QueryPerformanceCounter( &counter );
-	return counter.QuadPart;
-}
-
 inline void platform_sleep( i32 msWait )
 {
 	Sleep( msWait );
