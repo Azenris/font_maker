@@ -19,7 +19,6 @@ ZLIB_LIBRARY_DEBUG        should point to your debug zlib library
 ZLIB_INCLUDE_DIR          should point to your zlib include directory
 ```
 ```
-
-# build.bat
 You can check the build.bat as an example.
 It will also show how the zlib is compiled using vcpkg
+```
