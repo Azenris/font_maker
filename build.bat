@@ -1,15 +1,24 @@
 @echo OFF
 cls
 
-:: Change -DZLIB_LIBRARY= to point to your zlib library
-	:: You can optionaly specify DZLIB_LIBRARY_RELEASE & DZLIB_LIBRARY_DEBUG separately
-:: Change -DZLIB_INCLUDE_DIR= to point to your zlib include directory
+:: VCPKG
+:: goto (for example) C:/ProgrammingCDrive/
+:: git clone https://github.com/microsoft/vcpkg.git
+:: run the bootstrap-vcpkg (a vcpkg.exe will be created)
+:: add this to global enviroment paths
+
+:: vcpkg install zlib:x64-windows
+
+:: Set CMAKE_TOOLCHAIN_FILE to the <vcpkg-path>/scripts/buildsystems/vcpkg.cmake
+:: (for example) -DCMAKE_TOOLCHAIN_FILE=C:/ProgrammingCDrive/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+:: ZLIB (zlib doesn't allow selection of static/dynamic lib. Manually setting them will allow choosing)
 
 if not exist build (
 	cmake -S . -B build ^
-		-DZLIB_LIBRARY_RELEASE="C:/libs/zlib/release/64/zlib.lib" ^
-		-DZLIB_LIBRARY_DEBUG="C:/libs/zlib/debug/64/zlib.lib" ^
-		-DZLIB_INCLUDE_DIR="C:/libs/zlib/include/"
+		-DZLIB_INCLUDE_DIR=C:/ProgrammingCDrive/vcpkg/packages/zlib_x64-windows/include/ ^
+		-DZLIB_LIBRARY_RELEASE=C:/ProgrammingCDrive/vcpkg/packages/zlib_x64-windows/lib/zlib.lib ^
+		-DZLIB_LIBRARY_DEBUG=C:/ProgrammingCDrive/vcpkg/packages/zlib_x64-windows/debug/lib/zlibd.lib
 )
 
-cmake --build build --config=Debug
+cmake --build build --config=Release

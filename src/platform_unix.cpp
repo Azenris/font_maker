@@ -70,7 +70,7 @@ void show_debug_error_function_ext( const char *message, va_list args )
 	printf( "\x1b[31m[ERROR]:\x1b[0m %s\n", buffer );
 }
 
-inline void platform_sleep( i32 msWait )
+void platform_sleep( i32 msWait )
 {
 	usleep( msWait * 1000 );
 }

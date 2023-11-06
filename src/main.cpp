@@ -8,7 +8,7 @@
 #include <cstdio>
 
 // Third Party Includes
-#include "zlib/zlib.h"
+#include "zlib.h"
 
 // Includes
 #include "defines.h"
@@ -607,8 +607,10 @@ int main( int argc, const char *argv[] )
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#if defined( WIN32 )
+#if defined( PLATFORM_WINDOWS )
 	#include "platform_windows.cpp"
-#elif defined( UNIX )
+#elif defined( PLATFORM_LINUX )
 	#include "platform_unix.cpp"
+#else
+	#warning Unknown System
 #endif

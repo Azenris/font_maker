@@ -1,5 +1,5 @@
 
-#ifdef WIN32
+#ifdef PLATFORM_WINDOWS
 	#include <direct.h>
 	#include "dirent/dirent.h"
 #else
@@ -7,7 +7,7 @@
 	#include <dirent.h>
 #endif
 
-#ifdef WIN32
+#ifdef PLATFORM_WINDOWS
 	#define finternal_stat_struct		struct _stat64
 	#define finternal_stat				_stat64
 	#define finternal_mkdir( p, m )		_mkdir( p )
