@@ -1,27 +1,30 @@
 
-// System includes
+// System Includes
+#include <stdint.h>
 #include <stdarg.h>
+#include <string.h>
 #include <cmath>
+#include <cfloat>
+#include <cstdio>
+
+// Third Party Includes
+#include "zlib/zlib.h"
 
 // Includes
 #include "defines.h"
 #include "logging.h"
 #include "platform.h"
-#include "zlib\zlib.h"
+#include "memory_arena.h"
 #include "array.h"
 #include "strings.h"
 #include "map.h"
-#include "memory_arena.h"
 #include "utility.h"
 #include "error_codes.h"
 #include "font_info.h"
+#include "files.h"
 #include "data_parser.h"
 #include "stb_image.h"
 #include "stb_image_write.h"
-#include "platform_windows.cpp"
-
-MemoryArena arena;
-
 #include "image.h"
 
 struct Options
@@ -40,15 +43,21 @@ struct Options
 	int maxW = 256;
 	bool base64 = false;
 	bool compress = false;
+};
 
-} options;
+struct App
+{
+	MemoryArena memory;
+	char workingDirectory[ 4096 ] = ".";
+	Options options;
+} app;
 
 static int usage_message( RESULT_CODE code )
 {
 	show_log_warning( "\nERROR_CODE: %s\n", error_code_string( code ) );
 	show_log_info( ":: USAGE ::" );
-	show_log_message( "Expects %s <input file> <options>", options.programName );
-	show_log_message( "Eg. %s %s\n", options.programName, "test\\main_font -o test\\main_font_sdf.png" );
+	show_log_message( "Expects %s <input file> <options>", app.options.programName );
+	show_log_message( "Eg. %s %s\n", app.options.programName, "test\\main_font -o test\\main_font_sdf.png" );
 	show_log_info( "OPTIONAL COMMANDS" );
 	show_log_message( "[-v]                         EG. -v                                     (enable verbose outputs)" );
 	show_log_message( "[-ra]                        EG. -ra                                    (outputs received arguments)" );
@@ -65,31 +74,17 @@ static int usage_message( RESULT_CODE code )
 	return code;
 }
 
-#ifdef DEBUG
-int main( int _argc, const char *_argv[] )
-{
-	const char *argv[] = { "font_maker.exe", "debug\\test\\font_main.png", "-v", "-ra"
-		, "-wd", "C:\\ProgrammingCDrive\\FontMaker", "-maxW", "512", "-sdf", "4"
-		//, "-o", "debug\\test\\output_main_font.png"
-		, "-inject", "debug\\test\\TEXTURE_ATLAS_01.png", "512", "0"
-		, "-d", "debug\\test\\output_main_font.bin" };
-	int argc = array_length( argv );
-#else
 int main( int argc, const char *argv[] )
 {
-#endif
-
-	platform_initialise();
-
-	options.inputFile[ 0 ] = '\0';
-	options.outputFile[ 0 ] = '\0';
-	options.outputDataFile[ 0 ] = '\0';
+	app.options.inputFile[ 0 ] = '\0';
+	app.options.outputFile[ 0 ] = '\0';
+	app.options.outputDataFile[ 0 ] = '\0';
 
 	Map<const char *, RESULT_CODE(*)( int &, int, const char ** ), 256> commands;
 
 	commands.insert( "-v", [] ( int &index, int argc, const char *argv[] )
 		{
-			options.verbose = true;
+			app.options.verbose = true;
 
 			return RESULT_CODE_SUCCESS;
 		} );
@@ -105,69 +100,69 @@ int main( int argc, const char *argv[] )
 
 	commands.insert( "-wd", [] ( int &index, int argc, const char *argv[] )
 		{
-			options.workingDirectory = argv[ ++index ];
+			app.options.workingDirectory = argv[ ++index ];
 
 			return RESULT_CODE_SUCCESS;
 		} );
 
 	commands.insert( "-o", [] ( int &index, int argc, const char *argv[] )
 		{
-			options.inject = false;
+			app.options.inject = false;
 
-			string_utf8_copy( options.outputFile, argv[ ++index ] );
+			string_utf8_copy( app.options.outputFile, argv[ ++index ] );
 
 			return RESULT_CODE_SUCCESS;
 		} );
 
 	commands.insert( "-inject", [] ( int &index, int argc, const char *argv[] )
 		{
-			options.inject = true;
+			app.options.inject = true;
 
-			string_utf8_copy( options.outputFile, argv[ ++index ] );
-			options.injectX = convert_to_int( argv[ ++index ] );
-			options.injectY = convert_to_int( argv[ ++index ] );
+			string_utf8_copy( app.options.outputFile, argv[ ++index ] );
+			app.options.injectX = convert_to_int( argv[ ++index ] );
+			app.options.injectY = convert_to_int( argv[ ++index ] );
 
 			return RESULT_CODE_SUCCESS;
 		} );
 
 	commands.insert( "-d", [] ( int &index, int argc, const char *argv[] )
 		{
-			string_utf8_copy( options.outputDataFile, argv[ ++index ] );
+			string_utf8_copy( app.options.outputDataFile, argv[ ++index ] );
 
 			return RESULT_CODE_SUCCESS;
 		} );
 
 	commands.insert( "-maxW", [] ( int &index, int argc, const char *argv[] )
 		{
-			options.maxW = convert_to_int( argv[ ++index ] );
+			app.options.maxW = convert_to_int( argv[ ++index ] );
 
 			return RESULT_CODE_SUCCESS;
 		} );
 
 	commands.insert( "-sdf", [] ( int &index, int argc, const char *argv[] )
 		{
-			options.sdfBufferSize = convert_to_int( argv[ ++index ] );
+			app.options.sdfBufferSize = convert_to_int( argv[ ++index ] );
 
 			return RESULT_CODE_SUCCESS;
 		} );
 
 	commands.insert( "-base64", [] ( int &index, int argc, const char *argv[] )
 		{
-			options.base64 = true;
+			app.options.base64 = true;
 
 			return RESULT_CODE_SUCCESS;
 		} );
 
 	commands.insert( "-compress", [] ( int &index, int argc, const char *argv[] )
 		{
-			options.compress = true;
+			app.options.compress = true;
 
 			return RESULT_CODE_SUCCESS;
 		} );
 
 	commands.insert( "-memory", [] ( int &index, int argc, const char *argv[] )
 		{
-			options.memory = convert_to_int( argv[ ++index ] );
+			app.options.memory = convert_to_int( argv[ ++index ] );
 
 			return RESULT_CODE_SUCCESS;
 		} );
@@ -190,19 +185,58 @@ int main( int argc, const char *argv[] )
 		}
 	}
 
-	if ( !memory_arena_initialise( &arena, 0, options.memory ) )
+	app.memory =
+	{
+		.flags = 0,
+		.memory = nullptr,
+		.permanent =
+		{
+			.capacity = 0,
+			.available = 0,
+			.memory = nullptr,
+			.lastAlloc = nullptr,
+			.allocate_func = memory_bump_allocate,
+			.reallocate_func = memory_bump_reallocate,
+			.shrink_func = memory_bump_shrink,
+			.free_func = memory_bump_free,
+			.attach_func = memory_bump_attach,
+		},
+		.transient =
+		{
+			.capacity = 0,
+			.available = 0,
+			.memory = nullptr,
+			.lastAlloc = nullptr,
+			.allocate_func = memory_bump_allocate,
+			.reallocate_func = memory_bump_reallocate,
+			.shrink_func = memory_bump_shrink,
+			.free_func = memory_bump_free,
+			.attach_func = memory_bump_attach,
+		},
+		.fastBump =
+		{
+			.capacity = 0,
+			.available = 0,
+			.memory = nullptr,
+			.lastAlloc = nullptr,
+			.allocate_func = memory_fast_bump_allocate,
+			.attach_func = nullptr,
+		},
+	};
+
+	if ( !app.memory.init( 0, app.options.memory, 0 ) )
 	{
 		show_log_error( "Failed to initialise memory arena" );
 		return usage_message( RESULT_CODE_FAILED_MEMORY_ARENA_INITIALISATION );
 	}
 
 	// Set working directory
-	if ( options.workingDirectory )
+	if ( app.options.workingDirectory )
 	{
-		platform_set_current_directory( options.workingDirectory );
+		change_directory( app.options.workingDirectory );
 
-		if ( options.verbose )
-			show_log_info( "Working directory changed to: %s", options.workingDirectory );
+		if ( app.options.verbose )
+			show_log_info( "Working directory changed to: %s", app.options.workingDirectory );
 	}
 
 	// Get the path without the extension
@@ -210,23 +244,23 @@ int main( int argc, const char *argv[] )
 	string_utf8_copy( name, argv[ 1 ] );
 	string_utf8_trim_ext( name );
 
-	string_utf8_copy( options.inputFile, argv[ 1 ] );
+	string_utf8_copy( app.options.inputFile, argv[ 1 ] );
 
-	if ( options.verbose )
-		show_log_info( "Input file: %s", options.inputFile );
+	if ( app.options.verbose )
+		show_log_info( "Input file: %s", app.options.inputFile );
 
 	// Create an output filename if one was not provided
-	if ( options.outputFile[ 0 ] == '\0' )
+	if ( app.options.outputFile[ 0 ] == '\0' )
 	{
-		string_utf8_copy( options.outputFile, name );
-		string_utf8_append( options.outputFile, "_output.png" );
+		string_utf8_copy( app.options.outputFile, name );
+		string_utf8_append( app.options.outputFile, "_output.png" );
 	}
 
 	// Create an output data filename if one was not provided
-	if ( options.outputDataFile[ 0 ] == '\0' )
+	if ( app.options.outputDataFile[ 0 ] == '\0' )
 	{
-		string_utf8_copy( options.outputDataFile, name );
-		string_utf8_append( options.outputDataFile, "_output.bin" );
+		string_utf8_copy( app.options.outputDataFile, name );
+		string_utf8_append( app.options.outputDataFile, "_output.bin" );
 	}
 
 	char inputDataFilename[ 4096 ];
@@ -234,15 +268,15 @@ int main( int argc, const char *argv[] )
 	string_utf8_append( inputDataFilename, ".txt" );
 
 	// Open input data file
-	u32 inputDataFile = platform_open_file( inputDataFilename, FILE_OPTION_READ );
+	u64 inputDataFile = open_file( inputDataFilename, FILE_OPTION_READ );
 
-	if ( inputDataFile == INVALID_INDEX_UINT_32 )
+	if ( inputDataFile == INVALID_INDEX_UINT_64 )
 	{
-		platform_close_file( inputDataFile );
+		close_file( inputDataFile );
 		show_log_warning( "Failed to open data file: %s", inputDataFilename );
 		return usage_message( RESULT_CODE_FAILED_TO_OPEN_INPUT_DATA_FILE );
 	}
-	else if ( options.verbose )
+	else if ( app.options.verbose )
 	{
 		show_log_message( "File opened: %s", inputDataFilename );
 	}
@@ -254,18 +288,18 @@ int main( int argc, const char *argv[] )
 	FontChars chars;
 	FontKernings kernings;
 
-	string_utf8_copy( header.textureName, string_utf8_get_filename( options.outputFile ) );
+	string_utf8_copy( header.textureName, string_utf8_get_filename( app.options.outputFile ) );
 	string_utf8_trim_ext( header.textureName );
 
-	header.sdfBufferSize = static_cast<u16>( options.sdfBufferSize );
+	header.sdfBufferSize = static_cast<u16>( app.options.sdfBufferSize );
 
-	if ( string_utf8_has_ext( options.inputFile, "ttf" ) )
+	if ( string_utf8_has_ext( app.options.inputFile, "ttf" ) )
 	{
-		parse_ttf_font_data_file( inputDataFile, &header, &chars, &kernings, &arena );
+		parse_ttf_font_data_file( inputDataFile, &header, &chars, &kernings, &app.memory.transient );
 	}
-	else if ( string_utf8_has_ext( options.inputFile, "png" ) )
+	else if ( string_utf8_has_ext( app.options.inputFile, "png" ) )
 	{
-		parse_img_font_data_file( inputDataFile, &header, &chars, &kernings, &arena );
+		parse_img_font_data_file( inputDataFile, &header, &chars, &kernings, &app.memory.transient );
 	}
 	else
 	{
@@ -273,7 +307,7 @@ int main( int argc, const char *argv[] )
 		return usage_message( RESULT_CODE_UNKNOWN_EXTENSION );
 	}
 
-	if ( options.verbose )
+	if ( app.options.verbose )
 		show_log_message( "Data file parsed: %s", inputDataFilename );
 
 	// -----------------------------------------------------------------------------
@@ -283,44 +317,42 @@ int main( int argc, const char *argv[] )
 	u32 imgHeight;
 	u32 imgChannels = 1;
 
-	u8 *image = platform_read_image( options.inputFile, &imgWidth, &imgHeight, &imgChannels );
+	u8 *image = read_image( app.options.inputFile, &imgWidth, &imgHeight, &imgChannels );
 
 	const u64 imageSize = imgWidth * imgHeight * imgChannels;
 
 	if ( !image )
 	{
-		show_log_warning( "Failed to open file: %s", options.inputFile );
+		show_log_warning( "Failed to open file: %s", app.options.inputFile );
 		return usage_message( RESULT_CODE_FAILED_TO_OPEN_INPUT_FILE );
 	}
 	if ( imageSize <= 0 )
 	{
-		show_log_warning( "Failed to open file: %s ( 0 bytes )", options.inputFile );
+		show_log_warning( "Failed to open file: %s ( 0 bytes )", app.options.inputFile );
 		return usage_message( RESULT_CODE_FAILED_TO_OPEN_INPUT_FILE );
 	}
-	else if ( options.verbose )
+	else if ( app.options.verbose )
 	{
-		show_log_message( "Read %d bytes for file: %s", imageSize, options.inputFile );
+		show_log_message( "Read %d bytes for file: %s", imageSize, app.options.inputFile );
 	}
 
-	const u32 charWidth = header.maxCharW + options.sdfBufferSize * 2;
-	const u32 charHeight = header.maxCharH + options.sdfBufferSize * 2;
-	const u32 charNumX = options.maxW / charWidth;
+	const u32 charWidth = header.maxCharW + app.options.sdfBufferSize * 2;
+	const u32 charHeight = header.maxCharH + app.options.sdfBufferSize * 2;
+	const u32 charNumX = app.options.maxW / charWidth;
 	const u32 charNumY = static_cast<u32>( ceil( static_cast<f32>( header.maxChars ) / charNumX ) );
 
 	const u32 outWidth = charNumX * charWidth;
 	const u32 outHeight = charNumY * charHeight;
 	const u32 outChannels = 4;
-	const u32 outImageSize = outWidth * outHeight * outChannels;
+	const u64 outImageSize = outWidth * outHeight * outChannels;
 
-	u8 *outImage = memory_arena_transient_allocate( &arena, outImageSize );
+	u8 *outImage = app.memory.transient.allocate<u8>( outImageSize, true );
 
 	if ( !outImage )
 	{
 		show_log_warning( "Failed to allocate &d bytes.", outImageSize );
 		return usage_message( RESULT_CODE_FAILED_TO_ALLOCATE_MEMORY_FOR_OUTPUT_IMAGE );
 	}
-
-	platform_memzero( outImage, outImageSize );
 
 	const int charsPerLine = imgWidth / header.gridW;
 	constexpr const f32 startBlend = 0.5f;
@@ -372,10 +404,10 @@ int main( int argc, const char *argv[] )
 			continue;
 
 		// If the sdf size if 0, then there is no sdf
-		if ( options.sdfBufferSize == 0 )
+		if ( app.options.sdfBufferSize == 0 )
 			continue;
 
-		i32 sdfBufferSize = static_cast<i32>( options.sdfBufferSize );
+		i32 sdfBufferSize = static_cast<i32>( app.options.sdfBufferSize );
 		f32 sdfBufferSizef = static_cast<f32>( sdfBufferSize );
 
 		startX = ( outGridPosX * charWidth );
@@ -438,11 +470,11 @@ int main( int argc, const char *argv[] )
 		}
 	}
 
-	if ( options.verbose )
+	if ( app.options.verbose )
 		show_log_message( "Finished creating sdf image. Preparing to save to disk." );
 
-	header.textureOffsetX = options.injectX;
-	header.textureOffsetY = options.injectY;
+	header.textureOffsetX = app.options.injectX;
+	header.textureOffsetY = app.options.injectY;
 	header.textureWidth = outWidth;
 	header.textureHeight = outHeight;
 
@@ -455,7 +487,7 @@ int main( int argc, const char *argv[] )
 		dataHeader.flags = FILE_HEADER_FLAG_COMPRESSED;
 
 		u64 dataBufferSize = sizeof( FontHeader ) + chars.bytes() + kernings.bytes();
-		u8 *dataBuffer = memory_arena_transient_allocate( &arena, dataBufferSize );
+		u8 *dataBuffer = app.memory.transient.allocate<u8>( dataBufferSize, true );
 
 		if ( !dataBuffer )
 		{
@@ -467,53 +499,56 @@ int main( int argc, const char *argv[] )
 		for ( int i = 0, maxChars = header.maxChars; i < maxChars; ++i )
 		{
 			FontChar &charData = chars[ i ];
-			charData.bearingX -= static_cast<i16>( options.sdfBufferSize );
-			charData.bearingY += static_cast<i16>( options.sdfBufferSize );
+			charData.bearingX -= static_cast<i16>( app.options.sdfBufferSize );
+			charData.bearingY += static_cast<i16>( app.options.sdfBufferSize );
 		}
 
 		u8 *dataBufferPtr = dataBuffer;
-		write_data( dataBufferPtr, &header, sizeof( header ) );
-		write_data( dataBufferPtr, chars.data, chars.bytes() );
-		write_data( dataBufferPtr, kernings.data, kernings.bytes() );
+		u8 *dstBarrier = dataBufferPtr + dataBufferSize;
+		Allocator *allocator = &app.memory.transient;
 
-		if ( !save_file( options.outputDataFile, dataBuffer, dataBufferSize, &dataHeader, &arena ) )
+		write_data( dataBufferPtr, &header, sizeof( header ), dstBarrier );
+		write_data( dataBufferPtr, chars.data, chars.bytes(), dstBarrier );
+		write_data( dataBufferPtr, kernings.data, kernings.bytes(), dstBarrier );
+
+		if ( !save_file( app.options.outputDataFile, dataBuffer, dataBufferSize, &dataHeader, allocator ) )
 		{
-			show_log_warning( "Failed to create output data file: %s", options.outputDataFile );
+			show_log_warning( "Failed to create output data file: %s", app.options.outputDataFile );
 			return usage_message( RESULT_CODE_FAILED_TO_CREATE_OUTPUT_DATA_FILE );
 		}
-		else if ( options.verbose )
-			show_log_message( "Output Datafile written to disk: %s", options.outputDataFile );
+		else if ( app.options.verbose )
+			show_log_message( "Output Datafile written to disk: %s", app.options.outputDataFile );
 
-		memory_arena_transient_free( &arena, dataBuffer );
+		allocator->free( dataBuffer );
 	}
 
 	// -----------------------------------------------------------------------------
 	// Write the sdf image out
 
 	// Check if it's injected into another image or creates its own file
-	if ( options.inject )
+	if ( app.options.inject )
 	{
 		u32 width;
 		u32 height;
 		u32 channels = 4;
 
-		u8 *injectImage = platform_read_image( options.outputFile, &width, &height, &channels );
+		u8 *injectImage = read_image( app.options.outputFile, &width, &height, &channels );
 
 		const u64 injectImageSize = width * height * channels;
 
 		// Attempt to read in the image that will be written to
 		if ( !injectImage || injectImageSize <= 0 )
 		{
-			show_log_warning( "Failed to open output image: %s", options.outputFile );
+			show_log_warning( "Failed to open output image: %s", app.options.outputFile );
 			return usage_message( RESULT_CODE_FAILED_TO_OPEN_OUTPUT_FILE );
 		}
 
-		u32 startX = options.injectX;
-		u32 startY = options.injectY;
+		u32 startX = app.options.injectX;
+		u32 startY = app.options.injectY;
 
 		if ( ( startX + outWidth ) > width || ( startY + outHeight ) > height )
 		{
-			show_log_warning( "Failed to inject image with dimensions [ %d x %d ] at [ %d x %d ]: %s", outWidth, outHeight, startX, startY, options.outputFile );
+			show_log_warning( "Failed to inject image with dimensions [ %d x %d ] at [ %d x %d ]: %s", outWidth, outHeight, startX, startY, app.options.outputFile );
 			return usage_message( RESULT_CODE_FAILED_TO_INJECT_IMAGE );
 		}
 
@@ -534,30 +569,46 @@ int main( int argc, const char *argv[] )
 			}
 		}
 
-		if ( !stbi_write_png( options.outputFile, width, height, channels, injectImage, width * channels ) )
+		if ( !stbi_write_png( app.options.outputFile, width, height, channels, injectImage, width * channels ) )
 		{
-			show_log_warning( "Failed to inject output image: %s", options.outputFile );
+			show_log_warning( "Failed to inject output image: %s", app.options.outputFile );
 			return usage_message( RESULT_CODE_FAILED_TO_CREATE_OUTPUT_FILE );
 		}
-		else if ( options.verbose )
-			show_log_message( "Successfully injected output image[ %d x %d ]: %s", outWidth, outHeight, options.outputFile );
+		else if ( app.options.verbose )
+			show_log_message( "Successfully injected output image[ %d x %d ]: %s", outWidth, outHeight, app.options.outputFile );
 	}
 	else
 	{
-		platform_create_directory( options.outputFile );
+		make_directory( app.options.outputFile );
 
-		if ( !stbi_write_png( options.outputFile, outWidth, outHeight, outChannels, outImage, outWidth * outChannels ) )
+		if ( !stbi_write_png( app.options.outputFile, outWidth, outHeight, outChannels, outImage, outWidth * outChannels ) )
 		{
-			show_log_warning( "Failed to create output image: %s", options.outputFile );
+			show_log_warning( "Failed to create output image: %s", app.options.outputFile );
 			return usage_message( RESULT_CODE_FAILED_TO_CREATE_OUTPUT_FILE );
 		}
-		else if ( options.verbose )
-			show_log_message( "Successfully created output image[ %d x %d ]: %s", outWidth, outHeight, options.outputFile );
+		else if ( app.options.verbose )
+			show_log_message( "Successfully created output image[ %d x %d ]: %s", outWidth, outHeight, app.options.outputFile );
 	}
 
 	// -----------------------------------------------------------------------------
 
-	platform_close_file( inputDataFile );
+	close_file( inputDataFile );
 
 	return 0;
 }
+
+// -----------------------------------------------------------------------------
+// Unity Build
+#include "files.cpp"
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#if defined( WIN32 )
+	#include "platform_windows.cpp"
+#elif defined( UNIX )
+	#include "platform_unix.cpp"
+#endif

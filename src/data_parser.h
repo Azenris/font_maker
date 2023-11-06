@@ -1,5 +1,5 @@
 
-static RESULT_CODE parse_img_font_data_file( u32 fileID, FontHeader *header, FontChars *pChars, FontKernings *pKernings, MemoryArena *arena )
+static RESULT_CODE parse_img_font_data_file( u64 fileID, FontHeader *header, FontChars *pChars, FontKernings *pKernings, Allocator *allocator )
 {
 	constexpr const int maxTokenslength = 32;
 	constexpr const int maxTokensPerLine = 32;
@@ -62,7 +62,7 @@ static RESULT_CODE parse_img_font_data_file( u32 fileID, FontHeader *header, Fon
 
 	// -------------------------------------------------------
 
-	u8 *buffer = platform_read_whole_file( fileID, arena, true );
+	u8 *buffer = read_whole_file( fileID, allocator, true );
 
 	if ( !buffer )
 	{
@@ -117,12 +117,12 @@ static RESULT_CODE parse_img_font_data_file( u32 fileID, FontHeader *header, Fon
 		tok = string_utf8_tokenise( tok, " \t\n", &token );
 	}
 
-	memory_arena_transient_free( arena, buffer );
+	allocator->free( buffer );
 
 	return RESULT_CODE_SUCCESS;
 }
 
-RESULT_CODE parse_ttf_font_data_file( u32 fileID, FontHeader *header, FontChars *pChars, FontKernings *pKernings, MemoryArena *arena )
+RESULT_CODE parse_ttf_font_data_file( u64 fileID, FontHeader *header, FontChars *pChars, FontKernings *pKernings, Allocator *allocator )
 {
 	// TODO parse_ttf_font_data_file
 	show_log_error( error_code_string( RESULT_CODE_PARSE_DATA_FILE_UNSUPPORTED ) );
