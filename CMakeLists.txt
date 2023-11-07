@@ -11,10 +11,10 @@ add_executable( font_maker src/main.cpp )
 
 target_include_directories( font_maker PRIVATE "./third_party/" )
 
-target_compile_options( font_maker PRIVATE C_PLUS_PLUS )
-target_compile_options( font_maker PRIVATE _CRT_SECURE_NO_WARNINGS )
-target_compile_options( font_maker PRIVATE "$<$<CONFIG:Debug>:DEBUG>" )
-target_compile_options( font_maker PRIVATE "$<$<CONFIG:Release>:NDEBUG>" )
+add_compile_definitions( font_maker PRIVATE C_PLUS_PLUS )
+add_compile_definitions( font_maker PRIVATE _CRT_SECURE_NO_WARNINGS )
+add_compile_definitions( font_maker PRIVATE "$<$<CONFIG:Debug>:DEBUG>" )
+add_compile_definitions( font_maker PRIVATE "$<$<CONFIG:Release>:NDEBUG>" )
 
 target_compile_features( font_maker PRIVATE cxx_std_20 )
 
