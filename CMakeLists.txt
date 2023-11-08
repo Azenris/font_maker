@@ -1,5 +1,5 @@
 
-cmake_minimum_required( VERSION 3.26.3...3.28 )
+cmake_minimum_required( VERSION 3.26.3 )
 
 project(
 	font_maker
@@ -12,7 +12,6 @@ add_executable( font_maker src/main.cpp )
 target_include_directories( font_maker PRIVATE "./third_party/" )
 
 target_compile_definitions( font_maker PRIVATE C_PLUS_PLUS )
-target_compile_definitions( font_maker PRIVATE _CRT_SECURE_NO_WARNINGS )
 target_compile_definitions( font_maker PRIVATE "$<$<CONFIG:Debug>:DEBUG>" )
 target_compile_definitions( font_maker PRIVATE "$<$<CONFIG:Release>:NDEBUG>" )
 
@@ -22,6 +21,7 @@ find_package( ZLIB REQUIRED )
 target_link_libraries( font_maker PRIVATE ZLIB::ZLIB )
 
 if ( MSVC )
+target_compile_definitions( font_maker PRIVATE _CRT_SECURE_NO_WARNINGS )
 	target_compile_options( font_maker PRIVATE -WX -W4 -wd4100 -wd4201 -wd4706 -Zc:preprocessor -Zc:strictStrings -GR- )
 	target_compile_options( font_maker PRIVATE $<$<CONFIG:Debug>:-Z7 -FC -MDd> )
 	target_compile_options( font_maker PRIVATE $<$<CONFIG:Release>:-MD -O2 -Ot -GF> )
