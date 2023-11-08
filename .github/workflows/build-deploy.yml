@@ -28,7 +28,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DZLIB_INCLUDE_DIR=/usr/local/share/vcpkg/packages/zlib_x64-linux/include/ \
             -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/packages/zlib_x64-linux/lib/zlib.lib \
-            -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/packages/zlib_x64-linux/debug/lib/zlibd.lib
+            -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/packages/zlib_x64-linux/release/lib/zlibd.lib
       - name: Build Project
         run: cmake --build build --config Release
       - name: Upload Atifacts
@@ -50,7 +50,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DZLIB_INCLUDE_DIR=C:/vcpkg/packages/zlib_x64-windows/include/ \
             -DZLIB_LIBRARY_RELEASE=C:/vcpkg/packages/zlib_x64-windows/lib/zlib.lib \
-            -DZLIB_LIBRARY_DEBUG=C:/vcpkg/packages/zlib_x64-windows/debug/lib/zlibd.lib
+            -DZLIB_LIBRARY_DEBUG=C:/vcpkg/packages/zlib_x64-windows/release/lib/zlibd.lib
       - name: Build Project
         run: cmake --build build --config Release
       - name: Upload Atifacts
