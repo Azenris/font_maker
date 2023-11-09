@@ -17,7 +17,7 @@ set_target_properties(
 	RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/builds/release"
 )
 
-target_include_directories( font_maker PRIVATE "./third_party/" )
+target_include_directories( font_maker PRIVATE "third_party/" )
 
 target_compile_definitions( font_maker PRIVATE C_PLUS_PLUS )
 target_compile_definitions( font_maker PRIVATE "$<$<CONFIG:Debug>:DEBUG>" )
