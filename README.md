@@ -7,8 +7,8 @@ I use it for `personal` projects.
 # How to build the build system using Cmake
 ```
 cmake -S . -B build
-cmake --build build --config=Release         for release
-cmake --build build --config=Debug           for debug
+cmake --build build --config=Release
+cmake --build build --config=Debug
 ```
 If zlib cannot be found, manually specify the locations.
 ```

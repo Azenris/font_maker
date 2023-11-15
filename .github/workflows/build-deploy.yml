@@ -29,7 +29,7 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake
       - name: Build Project
         run: cmake --build build --config Release
-      - name: Upload Atifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: release-ubuntu
@@ -51,7 +51,7 @@ jobs:
           -DZLIB_LIBRARY_DEBUG=C:/vcpkg/packages/zlib_x64-windows-static-md/debug/lib/zlibd.lib
       - name: Build Project
         run: cmake --build build --config Release
-      - name: Upload Atifacts
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: release-windows
