@@ -1,3 +1,8 @@
+# Status
+![Build Windows](https://github.com/Azenris/font_maker/actions/workflows/build-windows.yml/badge.svg)
+
+![Build Ubuntu](https://github.com/Azenris/font_maker/actions/workflows/build-ubuntu.yml/badge.svg)
+
 # What does it do?
 Turn a PNG Font into an SDF PNG Font.
 
