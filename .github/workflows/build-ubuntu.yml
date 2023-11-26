@@ -34,7 +34,6 @@ jobs:
       # Dependencies
       - name: Install zlib
         run: |
-          vcpkg install zlib:x64-linux-dynamic
           vcpkg install zlib:x64-linux-release
 
       # Build static-mt
@@ -47,21 +46,9 @@ jobs:
           -DLINK_ZLIB_INCLUDE=include/
           -DLINK_ZLIB_LIB=lib/zlib.lib
           -DLINK_ZLIB_LIB_DEBUG=debug/lib/zlibd.lib
+
       - name: Build Project (static-mt)
         run: cmake --build build/static-mt --config=Release
-
-      # Build shared-md
-      - name: Create Build System (shared-md)
-        run: >
-          cmake -S . -B build/shared-md
-          -DBUILD_STATIC=OFF
-          -DBUILD_CRT_STATIC=OFF
-          -DLINK_ZLIB=/usr/local/share/vcpkg/packages/zlib_x64-linux-dynamic
-          -DLINK_ZLIB_INCLUDE=include/
-          -DLINK_ZLIB_LIB=lib/zlib.so
-          -DLINK_ZLIB_LIB_DEBUG=debug/lib/zlibd.so
-      - name: Build Project (shared-md)
-        run: cmake --build build/shared-md --config=Release
 
       # Upload Artifacts
       - name: Upload Static Release MT Artifact
@@ -69,9 +56,3 @@ jobs:
         with:
           name: ubuntu-mt-release
           path: build/builds/bin-static-mt-release/
-
-      - name: Upload Shared Release MD Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ubuntu-md-release
-          path: build/builds/bin-shared-md-release/
