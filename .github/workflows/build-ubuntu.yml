@@ -42,10 +42,10 @@ jobs:
           cmake -S . -B build/static-mt
           -DBUILD_STATIC=ON
           -DBUILD_CRT_STATIC=ON
-          -DLINK_ZLIB="/usr/local/share/vcpkg/packages/zlib_x64-linux-release"
+          -DLINK_ZLIB="/usr/local/share/vcpkg/installed/x64-linux-release"
           -DLINK_ZLIB_INCLUDE="include/"
-          -DLINK_ZLIB_LIB="lib/zlib.a"
-          -DLINK_ZLIB_LIB_DEBUG="debug/lib/zlibd.a"
+          -DLINK_ZLIB_LIB="lib/libz.a"
+          -DLINK_ZLIB_LIB_DEBUG="debug/lib/libz.a"
 
       - name: Build Project (static-mt)
         run: cmake --build build/static-mt --config=Release
