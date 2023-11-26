@@ -8,25 +8,52 @@ Turn a PNG Font into an SDF PNG Font.
 # What is this for?
 I use it for `personal` projects.
 
+# Possible Package Manager
+I use vcpkg to install the dependencies.
+```
+cd c:\
+git clone https://github.com/microsoft/vcpkg.git
+cd vcpkg
+bootstrap-vcpkg
+```
+After running the bootstrap an exe should have been created.
+```
+add to enviroment path for easy access to vcpkg
+```
+
+# Dependencies
+```
+vcpkg install zlib:x64-windows-static-md
+```
+Packages will be downloaded into the vcpkg locations, in the packages & installed folders. Other possibilities include:
+```
+vcpkg install zlib:x64-windows
+vcpkg install zlib:x64-windows-static
+vcpkg install zlib:x64-windows-static-md
+vcpkg install zlib:x64-linux=release
+vcpkg install zlib:x64-linux-dynamic
+```
+
 # How to build the build system using Cmake
 ```
-cmake -S . -B build
-cmake --build build --config=Release
-cmake --build build --config=Debug
+BUILD_STATIC              build deps as static (else shared) (ON/OFF)
+BUILD_CRT_STATIC          link CRT as static (else shared) (ON/OFF)
+LINK_ZLIB                 zlib location
+LINK_ZLIB_INCLUDE         include folder
+LINK_ZLIB_LIB             release lib
+LINK_ZLIB_LIB_DEBUG       debug lib
 ```
-If zlib cannot be found, manually specify the locations.
 ```
 cmake -S . -B build ^
-	-DZLIB_LIBRARY_RELEASE="C:/zlib/release/64/zlib.lib" ^
-	-DZLIB_LIBRARY_DEBUG="C:/zlib/debug/64/zlib.lib" ^
-	-DZLIB_INCLUDE_DIR="C:/zlib/include"
+    -DBUILD_STATIC=ON
+    -DBUILD_CRT_STATIC=ON
+    -DLINK_ZLIB="C:/vcpkg/packages/zlib_x64-windows-static"
+    -DLINK_ZLIB_INCLUDE="include/"
+    -DLINK_ZLIB_LIB="lib/zlib.lib"
+    -DLINK_ZLIB_LIB_DEBUG="debug/lib/zlibd.lib"
 ```
+You can then build using:
 ```
-ZLIB_LIBRARY_RELEASE      should point to your release zlib library
-ZLIB_LIBRARY_DEBUG        should point to your debug zlib library
-ZLIB_INCLUDE_DIR          should point to your zlib include directory
-```
-```
-You can check the build.bat as an example.
-It will also show how the zlib is compiled using vcpkg
+cmake --build build --config=Release
+cmake --build build --config=Debug
 ```

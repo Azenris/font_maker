@@ -30,17 +30,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
+      # Dependencies
       - name: Install zlib
-        run: vcpkg install zlib:x64-linux
-      - name: Create Build System
+        run: |
+          vcpkg install zlib:x64-linux-dynamic
+          vcpkg install zlib:x64-linux-release
+
+      # Build static-mt
+      - name: Create Build System (static-mt)
         run: >
-          cmake -S . -B build
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_TOOLCHAIN_FILE=/usr/local/share/vcpkg/scripts/buildsystems/vcpkg.cmake
-      - name: Build Project
-        run: cmake --build build --config Release
-      - name: Upload Artifacts
+          cmake -S . -B build/static-mt
+          -DBUILD_STATIC=ON
+          -DBUILD_CRT_STATIC=ON
+          -DLINK_ZLIB=/usr/local/share/vcpkg/packages/zlib_x64-linux-release
+          -DLINK_ZLIB_INCLUDE=include/
+          -DLINK_ZLIB_LIB=lib/zlib.lib
+          -DLINK_ZLIB_LIB_DEBUG=debug/lib/zlibd.lib
+      - name: Build Project (static-mt)
+        run: cmake --build build/static-mt --config=Release
+
+      # Build shared-md
+      - name: Create Build System (shared-md)
+        run: >
+          cmake -S . -B build/shared-md
+          -DBUILD_STATIC=OFF
+          -DBUILD_CRT_STATIC=OFF
+          -DLINK_ZLIB=/usr/local/share/vcpkg/packages/zlib_x64-linux-dynamic
+          -DLINK_ZLIB_INCLUDE=include/
+          -DLINK_ZLIB_LIB=lib/zlib.so
+          -DLINK_ZLIB_LIB_DEBUG=debug/lib/zlibd.so
+      - name: Build Project (shared-md)
+        run: cmake --build build/shared-md --config=Release
+
+      # Upload Artifacts
+      - name: Upload Static Release MT Artifact
         uses: actions/upload-artifact@v3
         with:
-          name: release-ubuntu
-          path: build/builds/release/
+          name: ubuntu-mt-release
+          path: build/builds/bin-static-mt-release/
+
+      - name: Upload Shared Release MD Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu-md-release
+          path: build/builds/bin-shared-md-release/
