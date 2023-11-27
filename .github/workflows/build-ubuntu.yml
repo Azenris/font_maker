@@ -55,4 +55,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ubuntu-mt-release
-          path: build/builds/bin-static-mt-release/
+          path: /home/runner/work/font_maker/font_maker/build/builds/bin-static-mt-release/
