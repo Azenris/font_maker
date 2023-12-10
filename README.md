@@ -30,7 +30,7 @@ Packages will be downloaded into the vcpkg locations, in the packages & installe
 vcpkg install zlib:x64-windows
 vcpkg install zlib:x64-windows-static
 vcpkg install zlib:x64-windows-static-md
-vcpkg install zlib:x64-linux=release
+vcpkg install zlib:x64-linux-release
 vcpkg install zlib:x64-linux-dynamic
 ```
 
