@@ -42,6 +42,9 @@ function( connect_zlib target static crtStatic )
 	endif()
 endfunction()
 
+option( BUILD_STATIC "Build static" ON )
+option( BUILD_CRT_STATIC "CRT static link." ON )
+
 connect_zlib( font_maker BUILD_STATIC BUILD_CRT_STATIC )
 
 if ( MSVC )
@@ -49,7 +52,12 @@ if ( MSVC )
 	target_compile_options( font_maker PRIVATE -WX -W4 -wd4100 -wd4201 -wd4706 -Zc:preprocessor -Zc:strictStrings -GR- )
 	target_compile_options( font_maker PRIVATE $<$<CONFIG:Debug>:-Z7 -FC> )
 	target_compile_options( font_maker PRIVATE $<$<CONFIG:Release>:-O2 -Ot -GF> )
-	target_compile_options( font_maker PRIVATE $<$<CONFIG:Release>:-MT>$<$<CONFIG:Debug>:-MTd> )
+
+	if ( BUILD_CRT_STATIC )
+		target_compile_options( font_maker PRIVATE $<$<CONFIG:Release>:-MT>$<$<CONFIG:Debug>:-MTd> )
+	else()
+		target_compile_options( font_maker PRIVATE $<$<CONFIG:Release>:-MD>$<$<CONFIG:Debug>:-MDd> )
+	endif()
 endif()
 
 if ( CMAKE_COMPILER_IS_GNUCC )
@@ -68,8 +76,6 @@ if ( CMAKE_SYSTEM_NAME STREQUAL "Darwin" )
 	target_compile_definitions( font_maker PRIVATE "PLATFORM_MAC" )
 endif()
 
-option( BUILD_STATIC "Build static" ON )
-option( BUILD_CRT_STATIC "CRT static link." ON )
 
 if ( BUILD_STATIC AND BUILD_CRT_STATIC )
 	set_target_properties(
